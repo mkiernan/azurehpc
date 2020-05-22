@@ -4,6 +4,10 @@
     "install_from": "headnode",
     "admin_user": "hpcadmin",
     "variables": {
+        "acr_repo": "<NOT-SET>",
+        "docker_user": "hpcuser",
+        "key_vault": "<NOT-SET>",
+        "monitor_workspace": "<NOT-SET>",
         "hpc_image": "OpenLogic:CentOS-HPC:7.6:latest",
         "location": "southcentralus",
         "resource_group": "<NOT-SET>",
@@ -21,7 +25,8 @@
     "resources": {
         "headnode": {
             "type": "vm",
-            "vm_type": "variables.vm_type",
+            "vm_type": "Standard_D8s_v3",
+            "accelerated_networking": true,
             "public_ip": true,
             "image": "variables.hpc_image",
             "subnet": "compute",
@@ -46,7 +51,8 @@
                 "pbsclient",
                 "cndefault",
                 "localuser",
-                "disable-selinux"
+                "disable-selinux",
+                "container"
             ]
         }
     },
@@ -62,8 +68,11 @@
             "sudo": true
         },
         {
-            "script": "nfsserver.sh",
+            "script": "install-nfsserver.sh",
             "tag": "nfsserver",
+            "args": [
+                "/share"
+            ],
             "sudo": true
         },
         {
@@ -93,7 +102,7 @@
                 "pbspro_19.1.1.centos7/pbspro-server-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsserver",
-            "sudo": false
+            "sudo": true
         },
         {
             "script": "pbsclient.sh",
@@ -104,12 +113,26 @@
                 "pbspro_19.1.1.centos7/pbspro-execution-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsclient",
-            "sudo": false
+            "sudo": true
         },
         {
-            "script": "dockersetup.sh",
-            "tag": "cndefault",
-            "sudo": true
+            "script": "docker_setup.sh",
+            "sudo": true,
+            "tag": "container",
+            "args": [
+                "variables.acr_repo",
+                "acrkey.{{variables.acr_repo}}",
+                "variables.docker_user"
+            ]
+        },
+        {
+            "script": "analytics.sh",
+            "tag": "container",
+            "sudo": true,
+            "args": [
+                "variables.monitor_workspace",
+                "secret.{{variables.key_vault}}.analytics-key"
+            ]
         }
     ]
 }

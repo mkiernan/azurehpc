@@ -4,10 +4,12 @@
     "install_from": "headnode",
     "admin_user": "hpcadmin",
     "variables": {
-        "hpc_image": "OpenLogic:CentOS-HPC:7.6:latest",
-        "location": "southcentralus",
+        "hpc_image": "OpenLogic:CentOS-HPC:7.7:latest",
+        "location": "<NOT-SET>",
         "resource_group": "<NOT-SET>",
-        "vm_type": "Standard_HB60rs",
+        "vm_type": "<NOT-SET>",
+        "compute_instances": 2,
+        "low_priority": false,
         "vnet_resource_group": "variables.resource_group"
     },
     "vnet": {
@@ -21,10 +23,13 @@
     "resources": {
         "headnode": {
             "type": "vm",
-            "vm_type": "variables.vm_type",
+            "vm_type": "Standard_D8s_v3",
+            "accelerated_networking": true,
             "public_ip": true,
             "image": "variables.hpc_image",
             "subnet": "compute",
+            "data_disks": [1024, 1024],
+            "storage_sku": "Premium_LRS",
             "tags": [
                 "cndefault",
                 "nfsserver",
@@ -37,7 +42,8 @@
         "compute": {
             "type": "vmss",
             "vm_type": "variables.vm_type",
-            "instances": 2,
+            "instances": "variables.compute_instances",
+            "low_priority": "variables.low_priority",
             "image": "variables.hpc_image",
             "subnet": "compute",
             "tags": [
@@ -61,8 +67,21 @@
             "sudo": true
         },
         {
-            "script": "nfsserver.sh",
+            "script": "create_raid0.sh",
             "tag": "nfsserver",
+            "args": ["/dev/md10", "/dev/sd[c-d]"],
+            "sudo": true
+        },
+        {
+            "script": "make_filesystem.sh",
+            "tag": "nfsserver",
+            "args": ["/dev/md10", "xfs", "/share"],
+            "sudo": true
+        },
+        {
+            "script": "install-nfsserver.sh",
+            "tag": "nfsserver",
+            "args": ["/share"],
             "sudo": true
         },
         {
@@ -92,7 +111,7 @@
                 "pbspro_19.1.1.centos7/pbspro-server-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsserver",
-            "sudo": false
+            "sudo": true
         },
         {
             "script": "pbsclient.sh",
@@ -103,7 +122,16 @@
                 "pbspro_19.1.1.centos7/pbspro-execution-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsclient",
-            "sudo": false
-        }
+            "sudo": true
+        },
+        {
+            "script": "node_healthchecks.sh",
+            "tag": "pbsclient",
+            "sudo": true,
+            "args": [
+                "sasurl.azcathpcscus.badnodes,rw"
+            ],
+            "deps" : ["install-azcopy.sh","healthchecks.json"]
+        } 
     ]
 }

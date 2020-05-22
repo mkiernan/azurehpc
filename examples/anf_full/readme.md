@@ -1,4 +1,5 @@
 # Building a simple PBS compute cluster with a Windows visualization node (ANF will be used for User accounts and scratch storage)
+![Build Status](https://azurecat.visualstudio.com/hpccat/_apis/build/status/azhpc/examples/anf-full?branchName=master)
 
 Visualisation: [config.json](https://azurehpc.azureedge.net/?o=https://raw.githubusercontent.com/Azure/azurehpc/master/examples/anf_full/config.json), [NFS_ANF.json](https://azurehpc.azureedge.net/?o=https://raw.githubusercontent.com/Azure/azurehpc/master/examples/anf_full/NFS_ANF.json)
 

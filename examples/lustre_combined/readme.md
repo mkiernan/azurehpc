@@ -1,4 +1,5 @@
 # Lustre Cluster
+![Build Status](https://azurecat.visualstudio.com/hpccat/_apis/build/status/azhpc/examples/lustre_combined?branchName=master)
 
 Visualisation: [config.json](https://azurehpc.azureedge.net/?o=https://raw.githubusercontent.com/Azure/azurehpc/master/examples/lustre_combined/config.json)
 
@@ -23,5 +24,8 @@ The configuration file requires the following variables to be set:
 | storage_account         | The storage account for HSM                  |
 | storage_key             | The storage key for HSM                      |
 | storage_container       | The container to use for HSM                 |
+| log_analytics_lfs_name  | The name to use in log analytics             |
+| log_analytics_workspace | The log analytics workspace id               |
+| log_analytics_key       | The log analytics key                        |
 
-> Note: Key Vault should be used for the keys to keep them out of the config files.
+> Note: Macros exist to get the `storage_key` using `sakey.<storage-account-name>`, `log_analytics_workspace` using `laworkspace.<resource-group>.<workspace-name>` and `log_analytics_key` using `lakey.<resource-group>.<workspace-name>`.

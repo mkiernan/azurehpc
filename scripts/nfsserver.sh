@@ -150,9 +150,10 @@ setup_disks()
 
     mkdir -p $NFS_MOUNT_POINT
 
-    if [ "$nbDisks" = "1" ]; then
+        
+    if [ "$nbDisks" -eq "1" ]; then
         setup_single_disk $NFS_MOUNT_POINT "ext4" "$dataDevices"
-    else
+    elif [ "$nbDisks" -gt "1" ]; then
         setup_data_disks $NFS_MOUNT_POINT "xfs" "$dataDevices" "md10"
     fi
 
@@ -167,10 +168,10 @@ setup_disks()
 
     ln -s $NFS_SCRATCH /scratch
 
-    echo "$NFS_APPS    *(rw,sync)" >> /etc/exports
-    echo "$NFS_DATA    *(rw,sync)" >> /etc/exports
-    echo "$NFS_HOME    *(rw,sync)" >> /etc/exports
-    echo "$NFS_SCRATCH    *(rw,sync)" >> /etc/exports
+    echo "$NFS_APPS    *(rw,sync,no_root_squash)" >> /etc/exports
+    echo "$NFS_DATA    *(rw,sync,no_root_squash)" >> /etc/exports
+    echo "$NFS_HOME    *(rw,sync,no_root_squash)" >> /etc/exports
+    echo "$NFS_SCRATCH    *(rw,sync,no_root_squash)" >> /etc/exports
 
     exportfs
     exportfs -a

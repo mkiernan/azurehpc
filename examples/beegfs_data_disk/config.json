@@ -3,9 +3,11 @@
     "resource_group": "variables.resource_group",
     "install_from": "headnode",
     "admin_user": "hpcadmin",
-    "variables" : {
-        "image" : "OpenLogic:CentOS:7.6:latest",
-        "hpc_image": "OpenLogic:CentOS-HPC:7.6:latest",
+    "variables": {
+        "image": "OpenLogic:CentOS:7.7:latest",
+        "hpc_image": "OpenLogic:CentOS-HPC:7.7:latest",
+        "compute_instances": 4,
+        "vm_type": "Standard_HC44rs",
         "location": "<NOT-SET>",
         "resource_group": "<NOT-SET>",
         "vnet_resource_group": "variables.resource_group",
@@ -30,7 +32,7 @@
             "vm_type": "Standard_D8s_v3",
             "accelerated_networking": true,
             "public_ip": true,
-            "image": "variables.image",
+            "image": "variables.hpc_image",
             "subnet": "compute",
             "data_disks": [2048, 2048],
             "tags": [
@@ -46,8 +48,8 @@
         },
         "compute": {
             "type": "vmss",
-            "vm_type": "Standard_HC44rs",
-            "instances": 2,
+            "vm_type": "variables.vm_type",
+            "instances": "variables.compute_instances",
             "image": "variables.hpc_image",
             "subnet": "compute",
             "tags": [
@@ -62,7 +64,7 @@
         },
         "beegfsm": {
             "type": "vm",
-            "vm_type": "Standard_D4_v3",
+            "vm_type": "Standard_D4s_v3",
             "accelerated_networking": true,
             "image": "variables.image",
             "subnet": "compute",
@@ -86,6 +88,7 @@
                 "beegfspkgs",
                 "beegfssd",
                 "beegfsmd",
+                "cndefault",
                 "disable-selinux"
             ]
         }
@@ -146,8 +149,30 @@
             "sudo": true
         },
         {
-            "script": "nfsserver.sh",
+            "script": "create_raid0.sh",
             "tag": "nfsserver",
+            "args": [
+                "/dev/md10",
+                "/dev/sd[c-d]"
+            ],
+            "sudo": true
+        },
+        {
+            "script": "make_filesystem.sh",
+            "tag": "nfsserver",
+            "args": [
+                "/dev/md10",
+                "xfs",
+                "/share"
+            ],
+            "sudo": true
+        },
+        {
+            "script": "install-nfsserver.sh",
+            "tag": "nfsserver",
+            "args": [
+                "/share"
+            ],
             "sudo": true
         },
         {
@@ -177,7 +202,7 @@
                 "pbspro_19.1.1.centos7/pbspro-server-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsserver",
-            "sudo": false
+            "sudo": true
         },
         {
             "script": "pbsclient.sh",
@@ -188,11 +213,7 @@
                 "pbspro_19.1.1.centos7/pbspro-execution-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsclient",
-            "sudo": false
+            "sudo": true
         }
-    ],
-    "post_install": {
-        "args": [
-        ]
-    }
+    ]
 }

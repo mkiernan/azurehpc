@@ -1,5 +1,5 @@
 {
-    "location": "westeurope",
+    "location": "variables.location",
     "resource_group": "variables.resource_group",
     "install_from": "headnode",
     "admin_user": "hpcadmin",
@@ -13,21 +13,36 @@
     },
     "variables": {
         "resource_group": "<NOT-SET>",
-        "image": "OpenLogic:CentOS:7.6:latest",
+        "location": "westeurope",
+        "image": "OpenLogic:CentOS:7.7:latest",
+        "lustreimage": "OpenLogic:CentOS:7.7:latest",
+        "hpcimage": "OpenLogic:CentOS-HPC:7.7:latest",
+        "compute_instances": 2,
+        "lustre_instances": 4,
+        "low_priority": false,
         "storage_account": "<NOT-SET>",
-        "storage_key": "<NOT-SET>",
-        "storage_container": "<NOT-SET>"
+        "storage_key": "sakey.{{variables.storage_account}}",
+        "storage_container": "<NOT-SET>",
+        "log_analytics_lfs_name": "<NOT-SET>",
+        "la_resourcegroup": "<NOT-SET>",
+        "la_name": "<NOT-SET>",
+        "log_analytics_workspace": "laworkspace.{{variables.la_resourcegroup}}.{{variables.la_name}}",
+        "log_analytics_key": "lakey.{{variables.la_resourcegroup}}.{{variables.la_name}}",
+        "lustre_version": "2.12",
+        "lustre_mount": "/lustre"
     },
     "resources": {
         "headnode": {
             "type": "vm",
-            "vm_type": "Standard_D16s_v3",
+            "vm_type": "Standard_D8s_v3",
             "accelerated_networking": true,
             "public_ip": true,
             "image": "variables.image",
             "subnet": "compute",
             "tags": [
                 "disable-selinux",
+                "cndefault",
+                "lfsrepo",
                 "lfsclient",
                 "lfsazimport",
                 "localuser",
@@ -40,28 +55,33 @@
             "type": "vmss",
             "vm_type": "Standard_D32s_v3",
             "accelerated_networking": true,
-            "instances": 2,
-            "image": "variables.image",
+            "instances": "variables.compute_instances",
+            "low_priority": "variables.low_priority",
+            "image": "variables.hpcimage",
             "subnet": "compute",
             "tags": [
                 "disable-selinux",
+                "cndefault",
+                "lfsrepo",
                 "lfsclient",
                 "localuser",
                 "pbsclient",
-                "nfsclient",
-                "addmpich"
+                "nfsclient"
             ]
         },
         "lustre": {
             "type": "vmss",
             "vm_type": "Standard_L32s_v2",
-            "instances": 4,
+            "instances": "variables.lustre_instances",
             "accelerated_networking": true,
-            "image": "variables.image",
+            "image": "variables.lustreimage",
             "subnet": "storage",
             "tags": [
+                "cndefault",
                 "lustre",
-                "disable-selinux"
+                "lfsrepo",
+                "disable-selinux",
+                "lfsloganalytics"
             ]
         }
     },
@@ -72,8 +92,16 @@
             "sudo": true
         },
         {
-            "script": "nfsserver.sh",
+            "script": "cndefault.sh",
+            "tag": "cndefault",
+            "sudo": true
+        },
+        {
+            "script": "install-nfsserver.sh",
             "tag": "nfsserver",
+            "args": [
+                "/share"
+            ],
             "sudo": true
         },
         {
@@ -102,9 +130,16 @@
             "sudo": true
         },
         {
+            "script": "lfsrepo.sh",
+            "tag": "lfsrepo",
+            "args": [
+                "variables.lustre_version"
+            ],
+            "sudo": true
+        },
+        {
             "script": "lfspkgs.sh",
             "tag": "lustre",
-            "reboot": true,
             "sudo": true
         },
         {
@@ -130,7 +165,8 @@
                 "$(head -n1 hostlists/tags/lustre)",
                 "variables.storage_account",
                 "variables.storage_key",
-                "variables.storage_container"
+                "variables.storage_container",
+                "variables.lustre_version"
             ],
             "tag": "lustre",
             "sudo": true
@@ -138,7 +174,8 @@
         {
             "script": "lfsclient.sh",
             "args": [
-                "$(head -n1 hostlists/tags/lustre)"
+                "$(head -n1 hostlists/tags/lustre)",
+                "variables.lustre_mount"
             ],
             "tag": "lfsclient",
             "sudo": true
@@ -148,9 +185,21 @@
             "args": [
                 "variables.storage_account",
                 "variables.storage_key",
-                "variables.storage_container"
+                "variables.storage_container",
+                "variables.lustre_mount",
+                "variables.lustre_version"
             ],
             "tag": "lfsazimport",
+            "sudo": true
+        },
+        {
+            "script": "lfsloganalytics.sh",
+            "args": [
+                "variables.log_analytics_lfs_name",
+                "variables.log_analytics_workspace",
+                "variables.log_analytics_key"
+            ],
+            "tag": "lfsloganalytics",
             "sudo": true
         },
         {
@@ -164,7 +213,7 @@
                 "pbspro_19.1.1.centos7/pbspro-server-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsserver",
-            "sudo": false
+            "sudo": true
         },
         {
             "script": "pbsclient.sh",
@@ -175,12 +224,7 @@
                 "pbspro_19.1.1.centos7/pbspro-execution-19.1.1-0.x86_64.rpm"
             ],
             "tag": "pbsclient",
-            "sudo": false
-        },
-        {
-            "script": "addmpich.sh",
-            "sudo": true,
-            "tag": "addmpich"
+            "sudo": true
         }
     ]
 }

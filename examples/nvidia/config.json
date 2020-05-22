@@ -14,7 +14,7 @@
         "location": "<NOT-SET>",
         "resource_group": "<NOT-SET>",
         "vm_type": "<NOT-SET>",
-        "image": "OpenLogic:CentOS:7.6:latest"
+        "image": "OpenLogic:CentOS:7.7:latest"
     },
     "resources": {
         "jumpbox": {
@@ -30,7 +30,7 @@
         "gpumaster": {
             "type": "vm",
             "vm_type": "variables.vm_type",
-            "public_ip": true,
+            "public_ip": false,
             "image": "variables.image",
             "subnet": "admin",
             "tags": [
@@ -69,6 +69,11 @@
         },
         {
             "script": "cuda_drivers.sh",
+            "tag": "nvidia",
+            "sudo": true
+        },
+        {
+            "script": "check_gpu.sh",
             "tag": "nvidia",
             "sudo": true
         }

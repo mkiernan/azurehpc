@@ -9,14 +9,12 @@
     "location": "<NOT-SET>",
     "vm_type": "Standard_D8_v3",
     "resource_group": "<NOT-SET>",
-    "vnet_resource_group": "variables.resource_group",
     "ad_image": "MicrosoftWindowsServer:WindowsServer:2012-R2-Datacenter:latest",
     "ad_domain": "MyDomain.local",
     "ad_admin": "hpcadmin",
     "win_password": "<NOT-SET>"
   },
   "vnet": {
-    "resource_group": "variables.vnet_resource_group",
     "name": "hpcvnet",
     "address_prefix": "10.2.0.0/20",
     "subnets": {
@@ -81,9 +79,10 @@
       "sudo": true
     },
     {
-      "script": "nfsserver.sh",
-      "tag": "nfsserver",
-      "sudo": true
+        "script": "install-nfsserver.sh",
+        "tag": "nfsserver",
+        "args": ["/share"],
+        "sudo": true
     },
     {
       "script": "nfsclient.sh",
@@ -112,7 +111,7 @@
         "pbspro_19.1.1.centos7/pbspro-server-19.1.1-0.x86_64.rpm"
       ],
       "tag": "pbsserver",
-      "sudo": false
+      "sudo": true
     },
     {
       "script": "pbsclient.sh",
@@ -123,7 +122,7 @@
         "pbspro_19.1.1.centos7/pbspro-execution-19.1.1-0.x86_64.rpm"
       ],
       "tag": "pbsclient",
-      "sudo": false
+      "sudo": true
     },
     {
       "script": "join_domain.sh",
